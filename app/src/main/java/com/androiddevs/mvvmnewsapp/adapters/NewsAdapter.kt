@@ -57,7 +57,7 @@ class NewsAdapter : RecyclerView.Adapter<NewsAdapter.ArticleViewHolder>() {
         holder.itemView.apply {//"apply" provides a concise way to access and modify properties
             // of an object without repeating the object reference.
             Glide.with(this).load(article.urlToImage).into(ivArticleImage)
-            tvSource.text= article.source.name
+            tvSource.text= article.source?.name
             tvDescription.text=article.description
             tvTitle.text= article.title
             tvPublishedAt.text=article.publishedAt

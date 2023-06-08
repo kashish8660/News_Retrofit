@@ -3,6 +3,7 @@ package com.androiddevs.mvvmnewsapp.viewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.androiddevs.mvvmnewsapp.models.Article
 import com.androiddevs.mvvmnewsapp.models.NewsResponse
 import com.androiddevs.mvvmnewsapp.repository.NewsRepository
 import com.androiddevs.mvvmnewsapp.util.Resource
@@ -13,10 +14,14 @@ class NewsViewModel(val newsRepository: NewsRepository): ViewModel() {
 
     val breakingNews : MutableLiveData<Resource<NewsResponse>> = MutableLiveData() //this is the way to create an empty instance
     //of MutableLiveData, it'll contain response of getBreakingNews() wrapped under Resource's object
-    val breakingNewsPage = 1 //keeping the count of page in ViewModel cuz we don't want ki on screen rotation, page=1 ho jae
+    var breakingNewsPage = 1 //keeping the count of page in ViewModel cuz we don't want ki on screen rotation, page=1 ho jae
+    var breakingNewsResponse : NewsResponse?= null //to store the already loaded data
+
 
     val searchNews : MutableLiveData<Resource<NewsResponse>> = MutableLiveData()
-    val searchNewsPage = 1
+    var searchNewsPage = 1
+    var searchNewsResponse: NewsResponse?= null
+
     init {
         getBreakingNews("us")
     }
@@ -42,7 +47,16 @@ class NewsViewModel(val newsRepository: NewsRepository): ViewModel() {
         if (response.isSuccessful){
             response.body()?. let { resultResponse -> //"resultResponse" is a variable that stores "response.body()"
                 //and it's being passed as an argument while creating an instance of Success class below
-            return Resource.Success(resultResponse)
+                breakingNewsPage++
+                if (breakingNewsResponse==null){ //if this is the first page we want to load
+                    breakingNewsResponse=resultResponse
+                } else {
+                    val oldArticles = breakingNewsResponse?.articles //articles already present on screen
+                    val newArticles = resultResponse.articles //articles came after increasing breakingNewsPage
+                    oldArticles?.addAll(newArticles)
+                }
+                return Resource.Success(breakingNewsResponse?: resultResponse) //return breakingNewsResponse, but if it's null
+                //then return resultResponse
                 }
         }
         return Resource.Error(response.message()) //"message()" gives http status message
@@ -50,10 +64,29 @@ class NewsViewModel(val newsRepository: NewsRepository): ViewModel() {
 
     private fun handleSearchNewsResponse(response : Response<NewsResponse>): Resource<NewsResponse>{
         if (response.isSuccessful){
-            response.body()?. let { resultResponse ->
-                return Resource.Success(resultResponse)
+            response.body()?. let {  resultResponse ->
+                searchNewsPage++
+                if (searchNewsResponse==null){
+                    searchNewsResponse=resultResponse
+                } else {
+                    val oldArticles = searchNewsResponse?.articles
+                    val newArticles = resultResponse.articles
+                    oldArticles?.addAll(newArticles)
+                }
+                return Resource.Success(searchNewsResponse?: resultResponse)
             }
         }
         return Resource.Error(response.message())
+    }
+    fun saveArticle(article:Article) = viewModelScope.launch {
+        newsRepository.upsert(article)
+    }
+    fun getSavedArticles() =  newsRepository.getSavedNews()
+    fun deleteArticle(article: Article) = viewModelScope.launch {
+        newsRepository.deleteArticle(article)
+    }
+
+    private fun hasInternetConnection(): Boolean{
+        return true
     }
 }

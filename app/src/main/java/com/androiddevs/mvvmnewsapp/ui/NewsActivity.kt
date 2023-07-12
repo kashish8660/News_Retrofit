@@ -23,7 +23,7 @@ class NewsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_news)
-        val newsRepository= NewsRepository(ArticleDatabase(this))
+        val newsRepository= NewsRepository(ArticleDatabase(this))//"invoke" function in ArticleDatabase is invoked
         newsViewModel=ViewModelProvider(this, NewsViewModelFactory(newsRepository, application)).get(NewsViewModel::class.java)
 
 

@@ -44,7 +44,7 @@ class SearchNewsFragment: Fragment(R.layout.fragment_search_news) {
         }
         var job: Job?= null
         etSearch.addTextChangedListener{editable ->
-            job?.cancel() //cancelling the running job
+            job?.cancel() //cancelling the previous job if user types agian within 500ms
             job = MainScope().launch {
                 delay(SEARCH_NEWS_TIME_DELAY) //waiting for 500ms cuz we don't want to call the search APU on every text change
                 editable?. let {
